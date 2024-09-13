@@ -19,9 +19,17 @@ df.tail()
 
 from datetime import datetime
 
-df['last_active_date'].fillna(datetime.today(), inplace = True)
+df['join_date'] = pd.to_datetime(df['join_date'], errors='coerce')
+df['last_active_date'] = pd.to_datetime(df['last_active_date'], errors='coerce')
+df.dropna(subset=['join_date', 'last_active_date'], inplace=True, thresh=1)
 
-df['churn_flag'] = df['churn_flag'].astype(bool)
+df['age'] = pd.to_numeric(df['age'], errors='coerce')
+df.dropna(subset=['age'], inplace=True, thresh=1)
+
+Q1 = df['total_watch_time'].quantile(0.25)
+Q3 = df['total_watch_time'].quantile(0.75)
+IQR = Q3 - Q1
+df = df[~((df['total_watch_time'] < (Q1 - 0.5 * IQR)) | (df['total_watch_time'] > (Q3 + 0.5 * IQR)))]
 
 df['user_tenure'] = (pd.to_datetime(df['last_active_date']) - pd.to_datetime(df['join_date'])).dt.days
 
